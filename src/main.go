@@ -3,23 +3,13 @@ package main
 import (
 	"log"
 	"net/http"
-	"reflect"
 
 	"github.com/gorilla/mux"
 
 	"bansheechef-server/src/database"
+	"bansheechef-server/src/database/types"
 	"bansheechef-server/src/pages"
 )
-
-type IngredientType struct {
-	Id int
-	Name string
-	Barcode string
-	MaxAmount float32
-	IsVolume bool
-	UnitCount int
-	ImageId int
-}
 
 func main() {
 	router := mux.NewRouter()
@@ -29,8 +19,8 @@ func main() {
 	database.Open()
 	defer database.Close()
 
-	for i := range database.Query("select * from ingredient_types;", nil, reflect.TypeOf((*IngredientType)(nil)).Elem()) {
-		log.Println(i.(*IngredientType).Name)
+	for i := range database.Query("select * from ingredient_types;", nil, types.IngredientType_type()) {
+		log.Println(i.(*types.IngredientType).Name)
 	}
 
 	http.Handle("/", router)

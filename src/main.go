@@ -19,7 +19,7 @@ func main() {
 	database.Open()
 	defer database.Close()
 
-	for i := range database.Query("select * from ingredient_types;", nil, types.IngredientType_type()) {
+	for i := range database.Query("select * from ingredient_types where id = ?;", database.CreateArray(1), types.IngredientType_type()) {
 		log.Println(i.(*types.IngredientType).Name)
 	}
 

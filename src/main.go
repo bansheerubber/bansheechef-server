@@ -6,6 +6,7 @@ import (
 
 	"github.com/gorilla/mux"
 
+	"bansheechef-server/src/api"
 	"bansheechef-server/src/database"
 	"bansheechef-server/src/pages"
 )
@@ -17,6 +18,10 @@ func main() {
 	router.HandleFunc("/", pages.Index).
 		Methods("GET")
 
+	/** API STUFF **/
+	// handle /get-ingredients/
+	router.HandleFunc("/get-ingredients/", api.GetIngredients).
+		Methods("GET")
 	database.Open()
 	defer database.Close()
 

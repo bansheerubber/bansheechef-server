@@ -3,7 +3,6 @@ package api
 import (
 	"bansheechef-server/src/database"
 	"encoding/json"
-	"log"
 	"net/http"
 )
 
@@ -20,7 +19,7 @@ type GetIngredientsResult struct {
 
 func GetIngredients(response http.ResponseWriter, request *http.Request) {
 	var results []GetIngredientsResult
-	query := database.Query(
+	query, err := database.Query(
 		`SELECT name, max_amount, source, current_amount, i.id, ing.id, barcode
 		FROM ingredient_types i
 		LEFT JOIN images im ON i.image_id = im.id
@@ -29,13 +28,19 @@ func GetIngredients(response http.ResponseWriter, request *http.Request) {
 		GetIngredientsResult_type(),
 	)
 
+	if err != nil {
+		HandleFatal(&response, err)
+		return
+	}
+
 	for i := range query {
 		results = append(results, *query[i].(*GetIngredientsResult))
 	}
 
 	binary, err := json.Marshal(results)
 	if err != nil {
-		log.Fatal(err)
+		HandleFatal(&response, err)
+		return
 	}
 
 	response.Header().Set("Content-Type", "application/json")

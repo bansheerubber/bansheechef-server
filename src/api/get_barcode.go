@@ -3,7 +3,6 @@ package api
 import (
 	"bansheechef-server/src/database"
 	"encoding/json"
-	"log"
 	"net/http"
 )
 
@@ -23,14 +22,19 @@ func GetBarcode(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	result := database.QueryOne(
+	result, err := database.QueryOne(
 		`SELECT name, max_amount, source, i.id
 		FROM ingredient_types i
 		LEFT JOIN images im ON i.image_id = im.id
 		WHERE barcode = ?;`,
 		database.CreateArray(barcode),
 		BarcodeQueryResult_type(),
-	).(*BarcodeQueryResult)
+	)
+
+	if err != nil {
+		HandleFatal(&response, err)
+		return
+	}
 
 	if result == nil { // send empty json if we couldn't get a result
 		response.Header().Set("Content-Type", "application/json")
@@ -38,9 +42,10 @@ func GetBarcode(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	binary, err := json.Marshal(result)
+	binary, err := json.Marshal(result.(*BarcodeQueryResult))
 	if err != nil {
-		log.Fatal(err)
+		HandleFatal(&response, err)
+		return
 	}
 
 	response.Header().Set("Content-Type", "application/json")

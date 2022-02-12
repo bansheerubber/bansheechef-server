@@ -32,33 +32,42 @@ func Close(args ...interface{}) {
 	log.Println("Closed SQLITE database")
 }
 
-func Exec(query string, args ...interface{}) {
+func Exec(query string, args []interface{}) (sql.Result, error) {
 	transaction, err := database.Begin()
 	statement, err := transaction.Prepare(query)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	_, err = statement.Exec(args)
+	result, err := statement.Exec(args...)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 
 	err = transaction.Commit()
+	if err != nil {
+		return nil, err
+	}
+
 	err = statement.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
 }
 
-func Query(query string, args []interface{}, resultType reflect.Type) []interface{} {
+func Query(query string, args []interface{}, resultType reflect.Type) ([]interface{}, error) {
 	statement, err := database.Prepare(query)
 	defer statement.Close()
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 
 	rows, err := statement.Query(args...)
 	defer rows.Close()
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 
 	var results []interface{}
@@ -75,19 +84,19 @@ func Query(query string, args []interface{}, resultType reflect.Type) []interfac
 		results = append(results, result.Interface())
 	}
 
-	return results
+	return results, nil
 }
 
-func QueryOne(query string, args []interface{}, resultType reflect.Type) interface{} {
+func QueryOne(query string, args []interface{}, resultType reflect.Type) (interface{}, error) {
 	statement, err := database.Prepare(query)
 	defer statement.Close()
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 
 	row := statement.QueryRow(args...)
 	if row == nil {
-		return nil
+		return nil, nil
 	}
 
 	result := reflect.New(resultType) // create the type based on the result type supplied in the parameters
@@ -98,5 +107,5 @@ func QueryOne(query string, args []interface{}, resultType reflect.Type) interfa
 	}
 
 	row.Scan(columns...)
-	return result.Interface()
+	return result.Interface(), nil
 }

@@ -22,6 +22,11 @@ func main() {
 	// handle /get-ingredients/
 	router.HandleFunc("/get-ingredients/", api.GetIngredients).
 		Methods("GET")
+
+	// handle /get-barcode/
+	router.HandleFunc("/get-barcode/", api.GetBarcode).
+		Methods("GET")
+
 	database.Open()
 	defer database.Close()
 

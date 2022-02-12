@@ -48,35 +48,55 @@ func Exec(query string, args ...interface{}) {
 	err = statement.Close()
 }
 
-func Query(query string, args []interface{}, resultType reflect.Type) <-chan interface{} {
-	channel := make(chan interface{})
-	
+func Query(query string, args []interface{}, resultType reflect.Type) []interface{} {
 	statement, err := database.Prepare(query)
+	defer statement.Close()
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	rows, err := statement.Query(args...)
+	defer rows.Close()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	go func() {
-		defer statement.Close()
-		defer rows.Close()
-		defer close(channel)
+	var results []interface{}
+	for rows.Next() {
+		result := reflect.New(resultType) // create the type based on the result type supplied in the parameters
 
-		for rows.Next() {
-			result := reflect.New(resultType) // create the type based on the result type supplied in the parameters
-			columns := make([]interface{}, result.Elem().NumField()) // build a list of destinations to scan into using reflect
-			for i := 0; i < result.Elem().NumField(); i++ {
-				columns[i] = result.Elem().Field(i).Addr().Interface()
-			}
-
-			rows.Scan(columns...)
-
-			channel <- result.Interface() // yield
+		columns := make([]interface{}, result.Elem().NumField()) // build a list of destinations to scan into using reflect
+		for i := 0; i < result.Elem().NumField(); i++ {
+			columns[i] = result.Elem().Field(i).Addr().Interface()
 		}
-	}()
-	return channel
+
+		rows.Scan(columns...)
+
+		results = append(results, result.Interface())
+	}
+
+	return results
+}
+
+func QueryOne(query string, args []interface{}, resultType reflect.Type) interface{} {
+	statement, err := database.Prepare(query)
+	defer statement.Close()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	row := statement.QueryRow(args...)
+	if row == nil {
+		return nil
+	}
+
+	result := reflect.New(resultType) // create the type based on the result type supplied in the parameters
+
+	columns := make([]interface{}, result.Elem().NumField()) // build a list of destinations to scan into using reflect
+	for i := 0; i < result.Elem().NumField(); i++ {
+		columns[i] = result.Elem().Field(i).Addr().Interface()
+	}
+
+	row.Scan(columns...)
+	return result.Interface()
 }

@@ -7,22 +7,23 @@ import (
 	"github.com/gorilla/mux"
 
 	"bansheechef-server/src/database"
-	"bansheechef-server/src/database/types"
 	"bansheechef-server/src/pages"
 )
 
 func main() {
 	router := mux.NewRouter()
+
+	// handle index
 	router.HandleFunc("/", pages.Index).
 		Methods("GET")
 
 	database.Open()
 	defer database.Close()
 
-	for i := range database.Query("select * from ingredient_types where id = ?;", database.CreateArray(1), types.IngredientType_type()) {
-		log.Println(i.(*types.IngredientType).Name)
-	}
-
 	http.Handle("/", router)
-	log.Fatal(http.ListenAndServe("0.0.0.0:5000", nil))
+	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("./static"))))
+
+	log.Println("Serving HTTP on 0.0.0.0:5001")
+
+	log.Fatal(http.ListenAndServe("0.0.0.0:5001", nil))
 }

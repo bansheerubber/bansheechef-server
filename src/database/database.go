@@ -95,9 +95,6 @@ func QueryOne(query string, args []interface{}, resultType reflect.Type) (interf
 	}
 
 	row := statement.QueryRow(args...)
-	if row == nil {
-		return nil, nil
-	}
 
 	result := reflect.New(resultType) // create the type based on the result type supplied in the parameters
 
@@ -106,6 +103,12 @@ func QueryOne(query string, args []interface{}, resultType reflect.Type) (interf
 		columns[i] = result.Elem().Field(i).Addr().Interface()
 	}
 
-	row.Scan(columns...)
+	err = row.Scan(columns...)
+	if err == sql.ErrNoRows {
+		return nil, nil
+	} else if err != nil {
+		return nil, err
+	}
+
 	return result.Interface(), nil
 }

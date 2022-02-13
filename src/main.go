@@ -2,7 +2,9 @@ package main
 
 import (
 	"log"
+	"math/rand"
 	"net/http"
+	"time"
 
 	"github.com/gorilla/mux"
 
@@ -12,6 +14,8 @@ import (
 )
 
 func main() {
+	rand.Seed(time.Now().UnixNano()) // seed random
+	
 	router := mux.NewRouter()
 
 	// handle index
@@ -26,10 +30,13 @@ func main() {
 	// handle /get-barcode/
 	router.HandleFunc("/get-barcode/", api.GetBarcode).
 		Methods("GET")
-	
 
 	// handle /delete-ingredient/
-	router.HandleFunc("/delete-ingredient", api.DeleteIngredient).
+	router.HandleFunc("/delete-ingredient/", api.DeleteIngredient).
+		Methods("POST")
+	
+	// handle /add-ingredient/
+	router.HandleFunc("/add-ingredient/", api.AddIngredient).
 		Methods("POST")
 
 	database.Open()

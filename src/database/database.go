@@ -36,7 +36,7 @@ func Exec(query string, args []interface{}) (sql.Result, error) {
 	transaction, err := database.Begin()
 	statement, err := transaction.Prepare(query)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 
 	result, err := statement.Exec(args...)

@@ -38,6 +38,10 @@ func main() {
 	// handle /add-ingredient/
 	router.HandleFunc("/add-ingredient/", api.AddIngredient).
 		Methods("POST")
+	
+	// handle /update-ingredient/
+	router.HandleFunc("/update-ingredient/", api.UpdateIngredient).
+		Methods("POST")
 
 	database.Open()
 	defer database.Close()

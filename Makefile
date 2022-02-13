@@ -4,6 +4,7 @@ default: server
 all: default
 
 export PATH := $(shell pwd)/tools/database-type/dist:$(PATH)
+export GOMAXPROCS := $(shell nproc)
 
 go_source = $(shell find src -type f -name "*.go")
 
